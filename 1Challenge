@@ -1,0 +1,13 @@
+def solution(data, n):
+    # Create a dictionary to hold the count of each integer in the data list
+    count_dict = {}
+    for i in data:
+        if i in count_dict:
+            count_dict[i] += 1
+        else:
+            count_dict[i] = 1
+
+    # Use a list comprehension to filter out any integers that occur more than n times
+    filtered_data = [i for i in data if count_dict[i] <= n]
+
+    return filtered_data
