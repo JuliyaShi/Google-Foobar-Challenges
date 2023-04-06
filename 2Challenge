@@ -1,0 +1,41 @@
+Elevator Maintenance
+====================
+
+You've been assigned the onerous task of elevator maintenance -- ugh! It wouldn't be so bad, except that all the elevator documentation has been lying in a disorganized pile at the bottom of a filing cabinet for years, and you don't even know what elevator version numbers you'll be working on. 
+
+Elevator versions are represented by a series of numbers, divided up into major, minor and revision integers. New versions of an elevator increase the major number, e.g. 1, 2, 3, and so on. When new features are added to an elevator without being a complete new version, a second number named "minor" can be used to represent those new additions, e.g. 1.0, 1.1, 1.2, etc. Small fixes or maintenance work can be represented by a third number named "revision", e.g. 1.1.1, 1.1.2, 1.2.0, and so on. The number zero can be used as a major for pre-release versions of elevators, e.g. 0.1, 0.5, 0.9.2, etc (Commander Lambda is careful to always beta test her new technology, with her loyal henchmen as subjects!).
+
+Given a list of elevator versions represented as strings, write a function solution(l) that returns the same list sorted in ascending order by major, minor, and revision number so that you can identify the current elevator version. The versions in list l will always contain major numbers, but minor and revision numbers are optional. If the version contains a revision number, then it will also have a minor number.
+
+For example, given the list l as ["1.1.2", "1.0", "1.3.3", "1.0.12", "1.0.2"], the function solution(l) would return the list ["1.0", "1.0.2", "1.0.12", "1.1.2", "1.3.3"]. If two or more versions are equivalent but one version contains more numbers than the others, then these versions must be sorted ascending based on how many numbers they have, e.g ["1", "1.0", "1.0.0"]. The number of elements in the list l will be at least 1 and will not exceed 100.
+
+
+def solution(l):
+    # define a function to parse the version string into its components
+    def parse_version(version_str):
+        version_parts = version_str.split('.')
+        major = int(version_parts[0])
+        minor = int(version_parts[1]) if len(version_parts) > 1 else 0
+        revision = int(version_parts[2]) if len(version_parts) > 2 else 0
+        return (major, minor, revision)
+
+    # sort the list of versions using the parsed version components
+    sorted_versions = sorted(l, key=parse_version)
+
+    # handle cases where versions have different numbers of components
+    for i in range(len(sorted_versions) - 1):
+        curr_version = sorted_versions[i]
+        next_version = sorted_versions[i+1]
+
+        # compare the parsed version components
+        curr_parts = parse_version(curr_version)
+        next_parts = parse_version(next_version)
+        if curr_parts == next_parts:
+            # if the versions have the same components, sort them based on length
+            if len(curr_version) > len(next_version):
+                sorted_versions[i], sorted_versions[i+1] = next_version, curr_version
+        elif curr_parts > next_parts:
+            # if the current version is greater than the next version, swap them
+            sorted_versions[i], sorted_versions[i+1] = next_version, curr_version
+
+    return sorted_versions
