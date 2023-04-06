@@ -39,3 +39,100 @@ def solution(l):
             sorted_versions[i], sorted_versions[i+1] = next_version, curr_version
 
     return sorted_versions
+    
+    
+    
+Gearing Up for Destruction
+==========================
+
+As Commander Lambda's personal assistant, you've been assigned the task of configuring the LAMBCHOP doomsday device's axial orientation gears. It should be pretty simple -- just add gears to create the appropriate rotation ratio. But the problem is, due to the layout of the LAMBCHOP and the complicated system of beams and pipes supporting it, the pegs that will support the gears are fixed in place.
+
+The LAMBCHOP's engineers have given you lists identifying the placement of groups of pegs along various support beams. You need to place a gear on each peg (otherwise the gears will collide with unoccupied pegs). The engineers have plenty of gears in all different sizes stocked up, so you can choose gears of any size, from a radius of 1 on up. Your goal is to build a system where the last gear rotates at twice the rate (in revolutions per minute, or rpm) of the first gear, no matter the direction. Each gear (except the last) touches and turns the gear on the next peg to the right.
+
+Given a list of distinct positive integers named pegs representing the location of each peg along the support beam, write a function solution(pegs) which, if there is a solution, returns a list of two positive integers a and b representing the numerator and denominator of the first gear's radius in its simplest form in order to achieve the goal above, such that radius = a/b. The ratio a/b should be greater than or equal to 1. Not all support configurations will necessarily be capable of creating the proper rotation ratio, so if the task is impossible, the function solution(pegs) should return the list [-1, -1].
+
+For example, if the pegs are placed at [4, 30, 50], then the first gear could have a radius of 12, the second gear could have a radius of 14, and the last one a radius of 6. Thus, the last gear would rotate twice as fast as the first one. In this case, pegs would be [4, 30, 50] and solution(pegs) should return [12, 1].
+
+The list pegs will be given sorted in ascending order and will contain at least 2 and no more than 20 distinct positive integers, all between 1 and 10000 inclusive.
+
+
+import numpy as np
+from fractions import Fraction
+
+
+def solution(pegs):
+    # constraint I: gear[i] + gear[i+1] == distance[i]
+    # constraint II: gear[0] == 2 * gear[-1]
+    # constraint III: gear[0] >= 1
+    #
+    # I ensures that the gears fit into the spaces of the pegs
+    # II ensures that the total gear ration is 2:1
+    # III ensures that the gears have at least a radius of 1
+
+    pegs = np.array(pegs)
+
+    n = len(pegs)
+    gear_1 = [-1, -1]
+    distances = np.zeros(n - 1)
+    system_equations = np.zeros([n, n + 1])
+
+    # calculate the distances
+    for i in range(n - 1):
+        distances[i] = pegs[i + 1] - pegs[i]
+
+    # The first equation is about constraint II
+    system_equations[0, 0] = 1
+    system_equations[0, -2] = -2
+
+    # The other equations are about constraint I
+    for i in range(n - 1):
+        system_equations[i + 1, i] = 1
+        system_equations[i + 1, i + 1] = 1
+        system_equations[i + 1, -1] = distances[i]
+
+    # check for solvability
+    rank_a = np.linalg.matrix_rank(system_equations[:, 0:n])
+    rank_ac = np.linalg.matrix_rank(system_equations)
+
+    # System of linear equation has no solution (not full rank)
+    if rank_a != rank_ac:
+        return gear_1
+
+    # The system of linear equations has indefinite solutions (not expected)
+    if rank_ac < n:
+        return gear_1
+
+    # Solve the system of linear equations
+    gears = np.linalg.inv(system_equations[:, 0:n]).dot(system_equations[:, n])
+
+    # Check validity of the solution
+    if is_no_solution(distances, gears):
+        return gear_1
+
+    # convert gear 1 to integer fraction
+    frac_gear_1 = Fraction(gears[0]).limit_denominator()
+    gear_1[0] = int(frac_gear_1.numerator)
+    gear_1[1] = int(frac_gear_1.denominator)
+
+    # return the solution
+    return gear_1
+
+
+# Check if the solution is valid
+def is_no_solution(distances, gears):
+    # Check constraint I
+    for i in range(len(distances)):
+        if gears[i] + gears[i + 1] - distances[i] > 0.01:
+            return True
+
+    # Check constraint II
+    if gears[0] != gears[-1] * 2:
+        return True
+
+    # Check constraint III
+    for gear in gears:
+        if gear < 1:
+            return True
+
+    # no constraint has been violated thus the solution is valid
+    return False
